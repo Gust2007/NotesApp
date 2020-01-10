@@ -7,8 +7,8 @@
              mc:Ignorable="d" 
              d:DesignHeight="150" d:DesignWidth="300">
     <StackPanel Margin="20">
-        <TextBlock x:Name="titleTextblock" Text="Note title" FontSize="15" FontWeight="Bold"/>
+        <TextBlock x:Name="titleTextblock" Text="Note title" FontSize="20" FontWeight="Bold"/>
         <TextBlock x:Name="createdTextblock" Text="created Time" FontSize="12" Margin="0 10 0 0" Foreground="DarkGray"/>
-        <TextBlock x:Name="updatedTextblock" Text="updated Time" FontSize="14" Foreground="DodgerBlue" TextWrapping="Wrap"/>
+        <TextBlock x:Name="updatedTextblock" Text="updated Time" FontSize="13" Foreground="DodgerBlue" TextWrapping="Wrap"/>
     </StackPanel>
 </UserControl>

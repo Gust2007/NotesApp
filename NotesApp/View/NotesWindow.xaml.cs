@@ -1,4 +1,6 @@
-﻿using NotesApp.ViewModel;
+﻿using NotesApp.Model;
+using NotesApp.View.UserControls;
+using NotesApp.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -160,6 +162,18 @@ namespace NotesApp.View
             range.Save(fileStream, DataFormats.Rtf);
 
             viewModel.UpdateSelectedNote();
+        }
+
+        private void NoteControl_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            NoteControl noteControl = (sender as NoteControl);
+
+            if (noteControl != null)
+            {
+                noteControl.Note.IsEditing = true;
+
+                // MessageBox.Show("Note Title: " + noteControl.Note.Title, "Clicked on Note");
+            }
         }
     }
 }

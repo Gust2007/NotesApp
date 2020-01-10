@@ -81,7 +81,9 @@
     </ApplicationDefinition>
     <Compile Include="ViewModel\Commands\BeginEditCommand.cs" />
     <Compile Include="ViewModel\Commands\CancelNotebookEditCommand.cs" />
+    <Compile Include="ViewModel\Commands\CancelNoteEditCommand.cs" />
     <Compile Include="ViewModel\Commands\HasEditedCommand.cs" />
+    <Compile Include="ViewModel\Commands\HasEditedNoteCommand.cs" />
     <Compile Include="ViewModel\Commands\LoginCommand.cs" />
     <Compile Include="ViewModel\Commands\NewNotebookCommand.cs" />
     <Compile Include="ViewModel\Commands\NewNoteCommand.cs" />

@@ -42,7 +42,6 @@ namespace NotesApp.ViewModel
         }
 
 
-       
 
 
         public NewNotebookCommand NewNotebookCommand { get; set; }
@@ -50,6 +49,8 @@ namespace NotesApp.ViewModel
         public BeginEditCommand BeginEditCommand { get; set; }
         public HasEditedCommand HasEditedCommand { get; set; }
         public CancelNotebookEditCommand CancelNotebookEditCommand { get; set; }
+        public HasEditedNoteCommand HasEditedNoteCommand { get; set; }
+        public CancelNoteEditCommand CancelNoteEditCommand { get; set; }
 
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -67,6 +68,9 @@ namespace NotesApp.ViewModel
             BeginEditCommand = new BeginEditCommand(this);
             HasEditedCommand = new HasEditedCommand(this);
             CancelNotebookEditCommand = new CancelNotebookEditCommand();
+
+            HasEditedNoteCommand = new HasEditedNoteCommand(this);
+            CancelNoteEditCommand = new CancelNoteEditCommand();
 
             Notebooks = new ObservableCollection<Notebook>();
             Notes = new ObservableCollection<Note>();
@@ -147,6 +151,15 @@ namespace NotesApp.ViewModel
             {
                 DatabaseHelper.Update(notebook);
                 ReadNotebooks();
+            }
+        }
+
+        public void HasRenamedNote(Note note)
+        {
+            if (note != null)
+            {
+                DatabaseHelper.Update(note);
+                ReadNotes();
             }
         }
 

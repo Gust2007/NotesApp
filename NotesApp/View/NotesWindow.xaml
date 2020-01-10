@@ -67,7 +67,15 @@
                   SelectedItem="{Binding SelectedNote}" MinWidth="140">
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <uc:NoteControl Note="{Binding}"/>
+                    <Grid>
+                        <uc:NoteControl Note="{Binding}" MouseDoubleClick="NoteControl_MouseDoubleClick"/>
+                        <TextBox Text="{Binding Title, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding IsEditing, Mode=TwoWay, Converter={StaticResource boolToVis}}">
+                            <TextBox.InputBindings>
+                                <KeyBinding Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext.HasEditedNoteCommand}" Key="Return"  CommandParameter="{Binding}"/>
+                                <KeyBinding Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext.CancelNoteEditCommand}" Key="Esc"   CommandParameter="{Binding}"/>
+                            </TextBox.InputBindings>
+                        </TextBox>
+                    </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
