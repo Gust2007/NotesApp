@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Speech.Recognition;
 using System.Text;
 using System.Threading;
@@ -47,11 +48,11 @@ namespace NotesApp.View
             var fontFamilies = Fonts.SystemFontFamilies.OrderBy(f => f.Source);
             fontFamilyComboBox.ItemsSource = fontFamilies;
 
-            List<double> fontSizes = new List<double>() { 8, 9, 10, 11, 12 ,14, 16, 28, 38, 40};
+            List<double> fontSizes = new List<double>() { 8, 9, 10, 11, 12, 14, 16, 28, 38, 40 };
             fontSizeComboBox.ItemsSource = fontSizes;
         }
 
-        private void ViewModel_SelectedNoteChanged(object sender, EventArgs e)
+        private async void ViewModel_SelectedNoteChanged(object sender, EventArgs e)
         {
             contentRichTextBox.Document.Blocks.Clear();
 
@@ -60,11 +61,23 @@ namespace NotesApp.View
 
             if (!string.IsNullOrEmpty(viewModel.SelectedNote.FileLocation))
             {
-                using (FileStream fileStream = new FileStream(viewModel.SelectedNote.FileLocation, FileMode.Open))
+                Stream rtfFileStream = null;
+
+                using (HttpClient client = new HttpClient())
                 {
+                    var response = await client.GetAsync(viewModel.SelectedNote.FileLocation);
+                    rtfFileStream = await response.Content.ReadAsStreamAsync();
+
                     TextRange range = new TextRange(contentRichTextBox.Document.ContentStart, contentRichTextBox.Document.ContentEnd);
-                    range.Load(fileStream, DataFormats.Rtf);
+                    range.Load(rtfFileStream, DataFormats.Rtf);
                 }
+
+
+                //using (FileStream fileStream = new FileStream(viewModel.SelectedNote.FileLocation, FileMode.Open))
+                //{
+                //    TextRange range = new TextRange(contentRichTextBox.Document.ContentStart, contentRichTextBox.Document.ContentEnd);
+                //    range.Load(fileStream, DataFormats.Rtf);
+                //}
             }
         }
 
@@ -164,35 +177,46 @@ namespace NotesApp.View
         }
 
 
-        private void saveFileButton_Click(object sender, RoutedEventArgs e)
+        private async void saveFileButton_Click(object sender, RoutedEventArgs e)
         {
             string fileName = $"{viewModel.SelectedNote.Id}.rtf";
             string rtfFile = System.IO.Path.Combine(Environment.CurrentDirectory, fileName);
-            viewModel.SelectedNote.FileLocation = rtfFile;
 
-            using (FileStream fileStream = new FileStream(rtfFile, FileMode.Create))
-            {
-                TextRange range = new TextRange(contentRichTextBox.Document.ContentStart, contentRichTextBox.Document.ContentEnd);
-                range.Save(fileStream, DataFormats.Rtf);
-            }
+            //using (FileStream fileStream = new FileStream(rtfFile, FileMode.Create))
+            //{
+            //    TextRange range = new TextRange(contentRichTextBox.Document.ContentStart, contentRichTextBox.Document.ContentEnd);
+            //    range.Save(fileStream, DataFormats.Rtf);
+            //}
 
-            UploadFile(rtfFile, fileName);
+            string fileUrl = await UploadFile(rtfFile, fileName);
+            viewModel.SelectedNote.FileLocation = fileUrl;
 
             viewModel.UpdateSelectedNote();
         }
 
 
-        private async void UploadFile(string rtfFileLocation, string fileName)
+        private async Task<string> UploadFile(string rtfFileLocation, string fileName)
         {
+            string fileUrl = string.Empty;
+
             var account = CloudStorageAccount.Parse("DefaultEndpointsProtocol=https;AccountName=gustlsevernotestorage;AccountKey=VnaSq4sBMFvJdEjS7XfCNsCn8SMpdtBhAaReA9xn4SBbzs9PmIaHbSN5bhyPqvxQlcFK4ppk34hVodvYMssROA==;EndpointSuffix=core.windows.net");
             var client = account.CreateCloudBlobClient();
             var container = client.GetContainerReference("notes");
             var blob = container.GetBlockBlobReference(fileName);
 
-            using (FileStream fileStream = new FileStream(rtfFileLocation, FileMode.Open))
+            using (MemoryStream outputStream = new MemoryStream())
             {
-                await blob.UploadFromStreamAsync(fileStream);
+                TextRange range = new TextRange(contentRichTextBox.Document.ContentStart, contentRichTextBox.Document.ContentEnd);
+                range.Save(outputStream, DataFormats.Rtf);
+                outputStream.Seek(0, SeekOrigin.Begin);
+
+                await blob.UploadFromStreamAsync(outputStream);
+                fileUrl = blob.Uri.OriginalString;
             }
+
+
+
+            return fileUrl;
         }
 
 
