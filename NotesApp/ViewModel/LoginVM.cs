@@ -10,9 +10,9 @@ namespace NotesApp.ViewModel
 {
     public class LoginVM
     {
-        private User user;
+        private Users user;
 
-        public User User
+        public Users User
         {
             get { return user; }
             set { user = value; }
@@ -25,44 +25,71 @@ namespace NotesApp.ViewModel
 
         public LoginVM()
         {
-            User = new User();
+            User = new Users();
 
             RegisterCommand = new RegisterCommand(this);
             LoginCommand = new LoginCommand(this);
         }
 
-        public void Login()
+        public async void Login()
         {
-            using (SQLite.SQLiteConnection conn = new SQLite.SQLiteConnection(DatabaseHelper.dbFile))
+            //using (SQLite.SQLiteConnection conn = new SQLite.SQLiteConnection(DatabaseHelper.dbFile))
+            //{
+            //    conn.CreateTable<Users>();
+
+            //    var user = conn.Table<Users>().Where(u => u.Username == User.Username).FirstOrDefault();
+
+            //    if (user.Password == User.Password)
+            //    {
+            //        App.UserId = user.Id.ToString();
+            //        HasLoggedIn(this, new EventArgs());
+            //    }
+            //}
+
+            try
             {
-                conn.CreateTable<User>();
+                var loginUser = (await App.MobileServiceClient.GetTable<Users>().Where(u => u.Username == User.Username).ToListAsync()).FirstOrDefault();
 
-                var user = conn.Table<User>().Where(u => u.Username == User.Username).FirstOrDefault();
-
-                if (user.Password == User.Password)
+                if (loginUser.Password == User.Password)
                 {
-                    App.UserId = user.Id.ToString();
+                    App.UserId = loginUser.Id;
                     HasLoggedIn(this, new EventArgs());
                 }
+            }
+            catch(Exception ex)
+            {
+
             }
         }
 
 
-        public void Register()
+        public async void Register()
         {
-            using (SQLite.SQLiteConnection conn = new SQLite.SQLiteConnection(DatabaseHelper.dbFile))
+            //using (SQLite.SQLiteConnection conn = new SQLite.SQLiteConnection(DatabaseHelper.dbFile))
+            //{
+            //    conn.CreateTable<User>();
+
+            //    var result = DatabaseHelper.Insert(User);
+
+            //    if (result)
+            //    {
+            //        App.UserId = user.Id.ToString();
+            //        HasLoggedIn(this, new EventArgs());
+            //    }
+
+            //}
+
+            try
             {
-                conn.CreateTable<User>();
-
-                var result = DatabaseHelper.Insert(User);
-
-                if (result)
-                {
-                    App.UserId = user.Id.ToString();
-                    HasLoggedIn(this, new EventArgs());
-                }
+                await App.MobileServiceClient.GetTable<Users>().InsertAsync(User);
+                App.UserId = User.Id.ToString();
+                HasLoggedIn(this, new EventArgs());
+            }
+            catch (Exception ex)
+            {
 
             }
+
         }
     }
 }

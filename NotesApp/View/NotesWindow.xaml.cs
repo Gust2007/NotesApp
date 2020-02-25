@@ -1,4 +1,5 @@
-﻿using NotesApp.Model;
+﻿using Microsoft.WindowsAzure.Storage;
+using NotesApp.Model;
 using NotesApp.View.UserControls;
 using NotesApp.ViewModel;
 using System;
@@ -59,9 +60,11 @@ namespace NotesApp.View
 
             if (!string.IsNullOrEmpty(viewModel.SelectedNote.FileLocation))
             {
-                FileStream fileStream = new FileStream(viewModel.SelectedNote.FileLocation, FileMode.Open);
-                TextRange range = new TextRange(contentRichTextBox.Document.ContentStart, contentRichTextBox.Document.ContentEnd);
-                range.Load(fileStream, DataFormats.Rtf);
+                using (FileStream fileStream = new FileStream(viewModel.SelectedNote.FileLocation, FileMode.Open))
+                {
+                    TextRange range = new TextRange(contentRichTextBox.Document.ContentStart, contentRichTextBox.Document.ContentEnd);
+                    range.Load(fileStream, DataFormats.Rtf);
+                }
             }
         }
 
@@ -78,10 +81,17 @@ namespace NotesApp.View
             if (string.IsNullOrEmpty(App.UserId))
             {
                 LoginWindow loginWindow = new LoginWindow();
+                loginWindow.LoginViewModel.HasLoggedIn += LoginVM_HasLoggedIn;
+
                 loginWindow.ShowDialog();
             }
         }
 
+        private void LoginVM_HasLoggedIn(object sender, EventArgs e)
+        {
+            viewModel.ReadNotebooks();
+            viewModel.ReadNotes();
+        }
 
         private void contentRichTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
@@ -147,22 +157,44 @@ namespace NotesApp.View
             }
         }
 
+
         private void fontSizeComboBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             contentRichTextBox.Selection.ApplyPropertyValue(Inline.FontSizeProperty, fontSizeComboBox.Text);
         }
 
+
         private void saveFileButton_Click(object sender, RoutedEventArgs e)
         {
-            string rtfFile = System.IO.Path.Combine(Environment.CurrentDirectory, $"{viewModel.SelectedNote.Id}.rtf");
+            string fileName = $"{viewModel.SelectedNote.Id}.rtf";
+            string rtfFile = System.IO.Path.Combine(Environment.CurrentDirectory, fileName);
             viewModel.SelectedNote.FileLocation = rtfFile;
 
-            FileStream fileStream = new FileStream(rtfFile, FileMode.Create);
-            TextRange range = new TextRange(contentRichTextBox.Document.ContentStart, contentRichTextBox.Document.ContentEnd);
-            range.Save(fileStream, DataFormats.Rtf);
+            using (FileStream fileStream = new FileStream(rtfFile, FileMode.Create))
+            {
+                TextRange range = new TextRange(contentRichTextBox.Document.ContentStart, contentRichTextBox.Document.ContentEnd);
+                range.Save(fileStream, DataFormats.Rtf);
+            }
+
+            UploadFile(rtfFile, fileName);
 
             viewModel.UpdateSelectedNote();
         }
+
+
+        private async void UploadFile(string rtfFileLocation, string fileName)
+        {
+            var account = CloudStorageAccount.Parse("DefaultEndpointsProtocol=https;AccountName=gustlsevernotestorage;AccountKey=VnaSq4sBMFvJdEjS7XfCNsCn8SMpdtBhAaReA9xn4SBbzs9PmIaHbSN5bhyPqvxQlcFK4ppk34hVodvYMssROA==;EndpointSuffix=core.windows.net");
+            var client = account.CreateCloudBlobClient();
+            var container = client.GetContainerReference("notes");
+            var blob = container.GetBlockBlobReference(fileName);
+
+            using (FileStream fileStream = new FileStream(rtfFileLocation, FileMode.Open))
+            {
+                await blob.UploadFromStreamAsync(fileStream);
+            }
+        }
+
 
         private void NoteControl_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {

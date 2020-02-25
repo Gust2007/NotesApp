@@ -20,13 +20,16 @@ namespace NotesApp.View
     /// </summary>
     public partial class LoginWindow : Window
     {
+        public LoginVM LoginViewModel { get; set; }
+
+
         public LoginWindow()
         {
             InitializeComponent();
 
-            LoginVM vm = new LoginVM();
-            containerGrid.DataContext = vm;
-            vm.HasLoggedIn += Vm_HasLoggedIn;
+            LoginViewModel = new LoginVM();
+            containerGrid.DataContext = LoginViewModel;
+            LoginViewModel.HasLoggedIn += Vm_HasLoggedIn;
         }
 
         private void Vm_HasLoggedIn(object sender, EventArgs e)
