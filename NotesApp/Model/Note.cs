@@ -10,10 +10,11 @@ namespace NotesApp.Model
 {
     public class Note : INotifyPropertyChanged
     {
-        private string id;
+        // Note for Azure Port: Property Id must be a string
+        private int id;
 
         [PrimaryKey, AutoIncrement]
-        public string Id
+        public int Id
         {
             get { return id; }
             set { id = value;
@@ -21,10 +22,11 @@ namespace NotesApp.Model
             }
         }
 
-        private string notebookId;
+        // Note for Azure Port: Property notebookId must be a string
+        private int notebookId;
 
         [Indexed]
-        public string NotebookId
+        public int NotebookId
         {
             get { return notebookId; }
             set { notebookId = value;

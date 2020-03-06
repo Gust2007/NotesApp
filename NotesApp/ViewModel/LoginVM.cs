@@ -23,6 +23,7 @@ namespace NotesApp.ViewModel
 
         public event EventHandler HasLoggedIn;
 
+
         public LoginVM()
         {
             User = new Users();
@@ -31,21 +32,10 @@ namespace NotesApp.ViewModel
             LoginCommand = new LoginCommand(this);
         }
 
+
         public async void Login()
         {
-            //using (SQLite.SQLiteConnection conn = new SQLite.SQLiteConnection(DatabaseHelper.dbFile))
-            //{
-            //    conn.CreateTable<Users>();
-
-            //    var user = conn.Table<Users>().Where(u => u.Username == User.Username).FirstOrDefault();
-
-            //    if (user.Password == User.Password)
-            //    {
-            //        App.UserId = user.Id.ToString();
-            //        HasLoggedIn(this, new EventArgs());
-            //    }
-            //}
-
+#if USEAZURE
             try
             {
                 var loginUser = (await App.MobileServiceClient.GetTable<Users>().Where(u => u.Username == User.Username).ToListAsync()).FirstOrDefault();
@@ -56,29 +46,31 @@ namespace NotesApp.ViewModel
                     HasLoggedIn(this, new EventArgs());
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
 
             }
+#else
+            using (SQLite.SQLiteConnection conn = new SQLite.SQLiteConnection(DatabaseHelper.dbFile))
+            {
+                conn.CreateTable<Users>();
+
+                var user = conn.Table<Users>().Where(u => u.Username == User.Username).FirstOrDefault();
+
+                if (user.Password == User.Password)
+                {
+                    App.UserId = user.Id.ToString();
+                    HasLoggedIn(this, new EventArgs());
+                }
+            }
+#endif
+
         }
 
 
         public async void Register()
         {
-            //using (SQLite.SQLiteConnection conn = new SQLite.SQLiteConnection(DatabaseHelper.dbFile))
-            //{
-            //    conn.CreateTable<User>();
-
-            //    var result = DatabaseHelper.Insert(User);
-
-            //    if (result)
-            //    {
-            //        App.UserId = user.Id.ToString();
-            //        HasLoggedIn(this, new EventArgs());
-            //    }
-
-            //}
-
+#if USEAZURE
             try
             {
                 await App.MobileServiceClient.GetTable<Users>().InsertAsync(User);
@@ -89,7 +81,22 @@ namespace NotesApp.ViewModel
             {
 
             }
+#else
+            using (SQLite.SQLiteConnection conn = new SQLite.SQLiteConnection(DatabaseHelper.dbFile))
+            {
+                conn.CreateTable<Users>();
 
+                var result = DatabaseHelper.Insert(User);
+
+                if (result)
+                {
+                    App.UserId = user.Id.ToString();
+                    HasLoggedIn(this, new EventArgs());
+                }
+
+            }
+#endif
         }
+
     }
 }

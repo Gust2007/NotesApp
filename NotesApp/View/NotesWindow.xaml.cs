@@ -22,8 +22,6 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 
-// TODO: support two ore more Notes on a Notebook
-
 
 namespace NotesApp.View
 {
@@ -61,6 +59,7 @@ namespace NotesApp.View
 
             if (!string.IsNullOrEmpty(viewModel.SelectedNote.FileLocation))
             {
+#if USEAZURE
                 Stream rtfFileStream = null;
 
                 using (HttpClient client = new HttpClient())
@@ -71,13 +70,13 @@ namespace NotesApp.View
                     TextRange range = new TextRange(contentRichTextBox.Document.ContentStart, contentRichTextBox.Document.ContentEnd);
                     range.Load(rtfFileStream, DataFormats.Rtf);
                 }
-
-
-                //using (FileStream fileStream = new FileStream(viewModel.SelectedNote.FileLocation, FileMode.Open))
-                //{
-                //    TextRange range = new TextRange(contentRichTextBox.Document.ContentStart, contentRichTextBox.Document.ContentEnd);
-                //    range.Load(fileStream, DataFormats.Rtf);
-                //}
+#else
+                using (FileStream fileStream = new FileStream(viewModel.SelectedNote.FileLocation, FileMode.Open))
+                {
+                    TextRange range = new TextRange(contentRichTextBox.Document.ContentStart, contentRichTextBox.Document.ContentEnd);
+                    range.Load(fileStream, DataFormats.Rtf);
+                }
+#endif
             }
         }
 
@@ -162,6 +161,7 @@ namespace NotesApp.View
             fontSizeComboBox.Text = contentRichTextBox.Selection.GetPropertyValue(Inline.FontSizeProperty).ToString();
         }
 
+
         private void fontFamilyComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (fontFamilyComboBox.SelectedItem != null)
@@ -182,14 +182,17 @@ namespace NotesApp.View
             string fileName = $"{viewModel.SelectedNote.Id}.rtf";
             string rtfFile = System.IO.Path.Combine(Environment.CurrentDirectory, fileName);
 
-            //using (FileStream fileStream = new FileStream(rtfFile, FileMode.Create))
-            //{
-            //    TextRange range = new TextRange(contentRichTextBox.Document.ContentStart, contentRichTextBox.Document.ContentEnd);
-            //    range.Save(fileStream, DataFormats.Rtf);
-            //}
-
+#if USEAZURE
             string fileUrl = await UploadFile(rtfFile, fileName);
             viewModel.SelectedNote.FileLocation = fileUrl;
+#else
+            using (FileStream fileStream = new FileStream(rtfFile, FileMode.Create))
+            {
+                TextRange range = new TextRange(contentRichTextBox.Document.ContentStart, contentRichTextBox.Document.ContentEnd);
+                range.Save(fileStream, DataFormats.Rtf);
+            }
+            viewModel.SelectedNote.FileLocation = rtfFile;
+#endif
 
             viewModel.UpdateSelectedNote();
         }

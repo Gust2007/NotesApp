@@ -15,6 +15,9 @@ namespace NotesApp
     public partial class App : Application
     {
         public static string UserId = string.Empty;
+
+#if USEAZURE
         public static MobileServiceClient MobileServiceClient = new MobileServiceClient("https://notesappgust.azurewebsites.net");
+#endif
     }
 }

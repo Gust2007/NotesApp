@@ -77,6 +77,7 @@ namespace NotesApp.ViewModel
             Notes = new ObservableCollection<Note>();
         }
 
+
         private void OnPropertyChanged(string propertyName)
         {
             if (PropertyChanged != null)
@@ -91,10 +92,10 @@ namespace NotesApp.ViewModel
             Notebook newNotebook = new Notebook()
             {
                 Name = "New notebook",
-                UserId = App.UserId
+                UserId = Int32.Parse(App.UserId)
             };
 
-            //DatabaseHelper.Insert(newNotebook);
+#if USEAZURE
             try
             {
                 await App.MobileServiceClient.GetTable<Notebook>().InsertAsync(newNotebook);
@@ -103,12 +104,16 @@ namespace NotesApp.ViewModel
             {
 
             }
+#else
+            DatabaseHelper.Insert(newNotebook);
+#endif
 
             ReadNotebooks();
         }
 
 
-        public async void CreateNote(string notebookId)
+        // Note for Azure Port: parameter notebookId must be a string
+        public async void CreateNote(int notebookId)
         {
             Note newNote = new Note()
             {
@@ -118,7 +123,7 @@ namespace NotesApp.ViewModel
                 Title = "New note"
             };
 
-            //DatabaseHelper.Insert(newNote);
+#if USEAZURE
             try
             {
                 await App.MobileServiceClient.GetTable<Note>().InsertAsync(newNote);
@@ -127,6 +132,9 @@ namespace NotesApp.ViewModel
             {
 
             }
+#else
+            DatabaseHelper.Insert(newNote);
+#endif
 
             ReadNotes();
         }
@@ -134,46 +142,39 @@ namespace NotesApp.ViewModel
 
         public async void ReadNotebooks()
         {
-            //using (SQLiteConnection conn = new SQLiteConnection(DatabaseHelper.dbFile)) {
-            //    var notebooks = conn.Table<Notebook>().ToList();
-
-            //    Notebooks.Clear();
-
-            //    foreach (var notebook in notebooks) {
-            //        Notebooks.Add(notebook);
-            //    }
-            //}
+#if USEAZURE
             try
             {
                 Notebooks.Clear();
 
                 var notebooks = await App.MobileServiceClient.GetTable<Notebook>().Where(n => n.UserId == App.UserId).ToListAsync();
 
-                foreach(var notebook in notebooks)
+                foreach (var notebook in notebooks)
                 {
                     Notebooks.Add(notebook);
                 }
             }
             catch (Exception ex)
             {
-
             }
+#else
+            using (SQLiteConnection conn = new SQLiteConnection(DatabaseHelper.dbFile)) {
+                var notebooks = conn.Table<Notebook>().ToList();
+
+                Notebooks.Clear();
+
+                foreach (var notebook in notebooks) {
+                    Notebooks.Add(notebook);
+                }
+            }
+#endif
 
         }
 
+
         public async void ReadNotes()
         {
-            //using (SQLiteConnection conn = new SQLiteConnection(DatabaseHelper.dbFile)) {
-            //    if (SelectedNotebook != null) {
-            //        var notes = conn.Table<Note>().Where(n => n.NotebookId == SelectedNotebook.Id);
-
-            //        Notes.Clear();
-            //        foreach (var note in notes) {
-            //            Notes.Add(note);
-            //        }
-            //    }
-            //}
-
+#if USEAZURE
             try
             {
                 Notes.Clear();
@@ -187,8 +188,19 @@ namespace NotesApp.ViewModel
             }
             catch (Exception ex)
             {
-
             }
+#else
+            using (SQLiteConnection conn = new SQLiteConnection(DatabaseHelper.dbFile)) {
+                if (SelectedNotebook != null) {
+                    var notes = conn.Table<Note>().Where(n => n.NotebookId == SelectedNotebook.Id);
+
+                    Notes.Clear();
+                    foreach (var note in notes) {
+                        Notes.Add(note);
+                    }
+                }
+            }
+#endif
         }
 
 
@@ -196,50 +208,60 @@ namespace NotesApp.ViewModel
         {
             if (notebook != null)
             {
-                // DatabaseHelper.Update(notebook);
+#if USEAZURE
                 try
                 {
                     await App.MobileServiceClient.GetTable<Notebook>().UpdateAsync(notebook);
                 }
                 catch (Exception ex)
                 {
-
                 }
+#else
+                 DatabaseHelper.Update(notebook);
+#endif
 
                 ReadNotebooks();
             }
         }
 
+
         public async void HasRenamedNote(Note note)
         {
             if (note != null)
             {
-                //DatabaseHelper.Update(note);
+#if USEAZURE
                 try
                 {
                     await App.MobileServiceClient.GetTable<Note>().UpdateAsync(note);
                 }
                 catch (Exception ex)
                 {
-
                 }
+#else
+                DatabaseHelper.Update(note);
+#endif
+
                 ReadNotes();
             }
         }
+
 
         public async void UpdateSelectedNote()
         {
             SelectedNote.UpdatedTime = DateTime.Now;
 
-            // DatabaseHelper.Update(SelectedNote);
+#if USEAZURE
             try
             {
                 await App.MobileServiceClient.GetTable<Note>().UpdateAsync(SelectedNote);
             }
             catch (Exception ex)
             {
-
             }
+#else
+             DatabaseHelper.Update(SelectedNote);
+#endif
+
         }
     }
 }
